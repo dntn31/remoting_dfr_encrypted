@@ -1,0 +1,132 @@
+<apex:page controller="FieldDescribeController">
+    <script>
+        var objectName;
+        var fieldName;
+
+        function getObjects() {
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.FieldDescribeController.getObjects}',
+                function(result, event){
+                    if (event.status) {
+                        result.sort();
+                        var select = document.getElementById("selectObject");
+                        result.forEach(opt => {
+                            var el = document.createElement("option");
+                            el.textContent = opt;
+                            el.value = opt;
+                            select.appendChild(el);
+                        });
+                    } else {
+                        document.getElementById("resultOutput").innerHTML = JSON.stringify(event, null, 4);
+                    }
+                }
+            );
+        }
+
+        function getObjectFields() {
+            if(objectName != "Choose an object") {
+                Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.FieldDescribeController.getObjectFields}',
+                    objectName,
+                    function(result, event){
+                        if (event.status) {
+                            result.sort();
+                            var select = document.getElementById("selectField");
+                            result.forEach(opt => {
+                                var el = document.createElement("option");
+                                el.textContent = opt;
+                                el.value = opt;
+                                select.appendChild(el);
+                            });
+                        } else {
+                            document.getElementById("resultOutput").innerHTML = JSON.stringify(event, null, 4);
+                        }
+                    }
+                );
+            } else {
+                disableButton();
+            }
+        }
+
+        function getFieldDsecribe() {
+            if(objectName != "Choose an object" && fieldName != "Choose a field") {
+                Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.FieldDescribeController.getFieldDescribe}',
+                    objectName,
+                    fieldName,
+                    function(result, event){
+                        if (event.status) {
+                            document.getElementById("resultOutput").innerHTML = JSON.stringify(result, null, 4);
+                        } else {
+                            document.getElementById("resultOutput").innerHTML = JSON.stringify(event, null, 4);
+                        }
+                    }
+                );
+            } else {
+                disableButton();
+            }
+        }
+
+        function setObjectName() {
+            clearFieldOptions();
+            disableButton();
+            var val = document.getElementById("selectObject").value;
+            if(val != "Choose an object") {
+                objectName = val;
+                getObjectFields();
+            }
+        }
+
+        function setFieldName() {
+            var val = document.getElementById("selectField").value;
+            if(val != "Choose a field") {
+                fieldName = val;
+                enableButton();
+            } else {
+                disableButton();
+            }
+        }
+
+        function clearFieldOptions() {
+            var select = document.getElementById("selectField");
+            for(var i = select.options.length - 1; i >= 0; i--) {
+                var opt = select.options[i];
+                if(opt.value != "Choose a field") {
+                    select.remove(i);
+                }
+            }
+        }
+
+        function disableButton() {
+            document.getElementById("describeFields").disabled = true;
+            clearResults();
+        }
+
+        function enableButton() {
+            document.getElementById("describeFields").disabled = false;
+        }
+
+        function clearResults() {
+            document.getElementById("resultOutput").innerHTML = null;
+        }
+
+        getObjects();
+    </script>
+
+    <p>
+        <select id="selectObject" onchange="setObjectName()">
+            <option>Choose an object</option>
+        </select>
+    </p>
+    
+    <p>
+        <select id="selectField" onchange="setFieldName()">
+            <option>Choose a field</option>
+        </select>
+    </p>
+    
+    <button id="describeFields" disabled="true" onclick="getFieldDsecribe()">Get Field Describe</button>
+
+    <pre id="resultOutput"></pre>
+
+</apex:page>
